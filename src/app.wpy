@@ -13,17 +13,49 @@
 import wepy from 'wepy'
 import 'wepy-async-function'
 
-
 export default class extends wepy.app {
   config = {
     pages: [
+      'pages/home',
+      'pages/category',
+      'pages/cart',
+      'pages/info',
       'pages/index'
     ],
     window: {
-      backgroundTextStyle: 'light',
-      navigationBarBackgroundColor: '#fff',
+      backgroundTextStyle: 'dark',
+      navigationBarBackgroundColor: '#FFFFFF',
       navigationBarTitleText: 'WeChat',
-      navigationBarTextStyle: 'black'
+      navigationBarTextStyle: 'black',
+      enablePullDownRefresh: false,
+      backgroundColor: '#EFEFEF'
+    },
+    'tabBar': {
+      'color': '#999999',
+      'selectedColor': '#ff6a3c',
+      'backgroundColor': '#ffffff',
+      'borderStyle': 'black',
+      'list': [{
+        'pagePath': 'pages/home',
+        'text': '首页',
+        'iconPath': 'images/icon_home.png',
+        'selectedIconPath': 'images/icon_home_active.png'
+      }, {
+        'pagePath': 'pages/category',
+        'text': '分类',
+        'iconPath': 'images/icon_category.png',
+        'selectedIconPath': 'images/icon_category_active.png'
+      }, {
+        'pagePath': 'pages/cart',
+        'text': '购物车',
+        'iconPath': 'images/icon_cart.png',
+        'selectedIconPath': 'images/icon_cart_active.png'
+      }, {
+        'pagePath': 'pages/info',
+        'text': '我',
+        'iconPath': 'images/icon_info.png',
+        'selectedIconPath': 'images/icon_info_active.png'
+      }]
     }
   }
 
