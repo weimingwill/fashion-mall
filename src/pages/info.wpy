@@ -1,0 +1,34 @@
+<template>
+  <view class="container">
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Category extends wepy.page {
+    config = {
+      navigationBarTitleText: '我的'
+    }
+
+    components = {
+    }
+
+    data = {
+    }
+
+    computed = {
+    }
+
+    methods = {
+    }
+
+    events = {
+    }
+
+    onLoad() {
+    }
+  }
+</script>
+<style lang="less">
+</style>
