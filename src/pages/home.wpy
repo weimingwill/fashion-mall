@@ -72,22 +72,22 @@
       navList: [
         {
           'pagePath': '/pages/sign_in',
-          'imagePath': '../images/icon_nav_01_new.png',
+          'imagePath': '../images/nav/icon_nav_01_new.png',
           'text': '签到有礼'
         },
         {
           'pagePath': '/pages/exchange_goods',
-          'imagePath': '../images/icon_nav_02_new.png',
+          'imagePath': '../images/nav/icon_nav_02_new.png',
           'text': '换货专区'
         },
         {
           'pagePath': '/pages/wholesale',
-          'imagePath': '../images/icon_nav_03_new.png',
+          'imagePath': '../images/nav/icon_nav_03_new.png',
           'text': '特价专区'
         },
         {
           'pagePath': '/pages/replenishment_goods',
-          'imagePath': '../images/icon_nav_04_new.png',
+          'imagePath': '../images/nav/icon_nav_04_new.png',
           'text': '我要补货'
         }
       ],
