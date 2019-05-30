@@ -1,10 +1,50 @@
 <template>
-  <view class="container">
+  <view>
+    <view class="top_search">
+      <view class="search_read_only">
+        <navigator class="search_content" url="/pages/search">
+          <i class="iconfont icon-search"></i>
+          <view class="search_input">搜索商品</view>
+        </navigator>
+      </view>
+    </view>
+
+    <view class="category" style="height:{{ windowHeight-50 }}px">
+      <scroll-view class="left_scroll"
+        scroll-y
+        scroll-with-animation="true"
+        style="height:{{ windowHeight-50 }}px">
+        <view wx:for="{{ rootList }}" wx:key="item"
+          class="name {{ item.active? 'active':'' }}"
+          @tap="changeCategory"
+          data-code="{{ item.code }}">
+          {{ item.name }}
+        </view>
+      </scroll-view>
+
+      <scroll-view class="detail_scroll"
+        scroll-y
+        scroll-with-animation="true"
+        style="height:{{ windowHeight-50 }}px">
+          <view class="children">
+            <navigator wx:for="{{ childList }}" wx:for-item="item" wx:key="index"
+              hover-class="none" class="children_item"
+              url="/pages/search?cateCode={{ item.secondCategory.code }}&title={{ item.secondCategory.name }}">
+              <image class="child_image" src="{{ item.secondCategory.thumLogo }}" />
+              <view class="child_name">{{ item.secondCategory.name }}</view>
+            </navigator>
+          </view>
+      </scroll-view>
+    </view>
+
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import api from '@/api/api'
+  import tip from '@/utils/tip'
+  import { SYSTEM_INFO, SELECTED_CLASS_CODE } from '@/utils/constant'
 
   export default class Category extends wepy.page {
     config = {
@@ -15,20 +55,142 @@
     }
 
     data = {
+      windowHeight: 100,
+      rootList: [],
+      childList: []
     }
 
     computed = {
     }
 
     methods = {
+      changeCategory(e) {
+        let code = e.currentTarget.dataset.code
+        this.getChildList(code)
+        wx.setStorageSync(SELECTED_CLASS_CODE, code)
+        this.setActiveRoot(code)
+      }
     }
 
     events = {
     }
 
+    setActiveRoot(code) {
+      for (var i = 0; i < this.rootList.length; i++) {
+        this.rootList[i].active = (this.rootList[i].code === code)
+      }
+    }
+
+    async getChildList(rootCategoryCode) {
+      const json = await api.getChildCategoryList({
+        query: {
+          rootCategoryCode: rootCategoryCode
+        }
+      })
+      if (json.data.code === '0') {
+        this.childList = json.data.list
+      } else {
+        tip.error(json.data.msg)
+      }
+      this.$apply()
+    }
+
+    async getRootList() {
+      const json = await api.getRootCategoryList({
+        query: {}
+      })
+      if (json.data.code === '0') {
+        this.rootList = json.data.list
+        if (this.rootList.length > 0) {
+          let selectedCode = wx.getStorageSync(SELECTED_CLASS_CODE)
+          let rootCategoryCode = selectedCode
+          if (selectedCode === '') {
+            this.rootList[0].active = true
+            rootCategoryCode = this.rootList[0].code
+          } else {
+            this.setActiveRoot(selectedCode)
+          }
+          this.getChildList(rootCategoryCode)
+        }
+      } else {
+        tip.error(json.data.msg)
+      }
+      this.$apply()
+    }
+
     onLoad() {
+      let systemInfo = wx.getStorageSync(SYSTEM_INFO)
+      this.windowHeight = systemInfo.windowHeight
+      this.$apply()
+    }
+
+    onShow() {
+      this.getRootList()
     }
   }
 </script>
 <style lang="less">
+  .search_read_only .search_content {
+    width: 100%;
+  }
+
+  .category {
+    display: flex;
+    position: relative;
+
+    .left_scroll {
+      width: 200rpx;
+      position: relative;
+      z-index: 1;
+
+      .name {
+        text-align: center;
+        height: 100rpx;
+        line-height: 100rpx;
+        color: #666;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .active {
+        border-left: 6rpx solid #ff6a3c;
+        background: #fff;
+        color: #ff6a3c;
+      }
+    }
+
+    .detail_scroll {
+      position: relative;
+      z-index: 999;
+      background: #fff;
+      padding: 15px 10px 10px 30px;
+
+      .children {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 20rpx 0rpx;
+      }
+
+      .children_item {
+        height: 200rpx;
+        width: 170rpx;
+        text-align: center;
+      }
+
+      .child_image {
+        width: 60px;
+        height: 60px;
+      }
+
+      .child_name {
+        width: 170rpx;
+        font-size: 26rpx;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
 </style>
