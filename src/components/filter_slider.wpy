@@ -1,0 +1,111 @@
+<template>
+  <view wx:if="{{ show }}">
+    <view class="filter-slider">
+      <view class="block">
+        <view class="title">尺码</view>
+        <view class="item_box">
+          <block wx:for="{{ sizes }}" wx:key="key">
+            <view class="item" data-sku="{{ item }}" @tap.stop="selectSku">{{ item }}</view>
+          </block>
+        </view>
+      </view>
+    </view>
+    <view class="modal-overlay modal-overlay-visible" @tap="close()"></view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class FilterSlider extends wepy.component {
+    data = {
+      show: false,
+      sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+    }
+
+    methods = {
+      close() {
+        this.show = false
+      },
+
+      selectSku(e) {
+        var sku = e.currentTarget.dataset.sku
+        this.$emit('filterSku', sku)
+        this.toggleOverlay()
+      }
+    }
+
+    toggleOverlay() {
+      this.show = !this.show
+      this.$apply()
+    }
+  }
+</script>
+
+<style lang="less">
+  .filter-slider {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 400rpx;
+    z-index: 106003;
+    background: #ffffff;
+  }
+
+  .block {
+    font-weight: 600;
+    color: #000;
+    margin-top: 30rpx;
+    padding-left: 30rpx;
+  }
+
+  .item_box {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-left: -30rpx;
+    margin-top: 30rpx;
+    padding-bottom: 30rpx;
+    border-bottom: 1px solid #efefef;
+
+    .item {
+      position: relative;
+      margin-left: 30rpx;
+      margin-top: 20rpx;
+      text-align: center;
+      border: 1px solid #c6c6c6;
+      border-radius: 5rpx;
+      width: 150rpx;
+      padding: 16rpx 0rpx;
+      font-size: 24rpx;
+      color: #2c2c2c;
+    }
+
+    .active {
+      border: 1px solid #f23737;
+      color: #f23737;
+    }
+
+    .icon-bottom-check {
+      position: absolute;
+      bottom: -4rpx;
+      right: 0;
+      color: #f23737;
+      font-size: 24rpx;
+    }
+  }
+
+  /*遮罩层*/
+  .modal-overlay.modal-overlay-visible {
+    opacity: .4;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 10600;
+    transition-duration: 400ms;
+  }
+</style>

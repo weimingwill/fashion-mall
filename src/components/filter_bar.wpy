@@ -1,0 +1,154 @@
+<template>
+  <view class="bar">
+    <view class="filter">
+      <view class="nav {{sortBy === 'general' ? 'nav_active' : ''}}" data-current="general" @tap="changeSort">综合</view>
+      <view class="nav  {{sortBy === 'sale' ? 'nav_active' : ''}}" data-current="sale" @tap="changeSort">销量</view>
+      <view class="grid nav">
+        <view class="price {{sortBy === 'price' ? 'nav_active' : ''}}" data-current="price" @tap.stop="changeSort">价格</view>
+        <view>
+          <view class="arrow arrow_up {{orderBy === 'desc' ? 'arrow_up_red' : 'arrow_up_gray'}}"></view>
+          <view class="arrow arrow_down {{orderBy === 'asc' ? 'arrow_down_red' : 'arrow_down_gray'}} "></view>
+        </view>
+      </view>
+      <view class="nav" @tap="filterSearch">
+        筛选<i class="iconfont icon-filter"></i>
+      </view>
+    </view>
+
+    <filterSlider></filterSlider>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import FilterSlider from '@/components/filter_slider'
+
+  export default class FilterBar extends wepy.component {
+    data = {
+      sortBy: '',
+      orderBy: '',
+      flag: false
+    }
+
+    components = {
+      filterSlider: FilterSlider
+    }
+
+    methods = {
+      filterSearch() {
+        this.$invoke('filterSlider', 'toggleOverlay', true)
+      },
+
+      changeSort(e) {
+        let that = this
+        if (that.sortBy !== e.target.dataset.current) {
+          that.sortBy = e.target.dataset.current
+        }
+
+        if (e.target.dataset.current === 'price') {
+          that.orderBy = (that.orderBy === 'desc' ? 'asc' : 'desc')
+        }
+        that.$apply()
+      }
+    }
+
+    setSkuVal (sku) {
+      this.$emit('sortBy', {
+        name: 'sku',
+        type: sku
+      })
+    }
+
+    watch = {
+      sortBy(newValue) {
+        this.$emit('sortBy', {
+          name: newValue,
+          type: 'desc'
+        })
+      },
+
+      orderBy(newValue, oldValue) {
+        if (oldValue !== '' && newValue !== '') {
+          this.$emit('sortBy', {
+            name: 'price',
+            type: newValue
+          })
+        }
+      }
+    }
+
+    events = {
+      // handles filterSku emit from filter slider
+      filterSku(sku) {
+        this.setSkuVal(sku)
+      }
+    }
+  }
+</script>
+
+<style lang="less">
+  .filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+
+    .nav {
+      color: #000000;
+      font-size: 26rpx;
+      padding: 12px 20px;
+    }
+
+    .nav_active {
+      color: #ff6a3c;
+    }
+
+    .icon-filter {
+      font-size: 26rpx;
+      color: #666;
+      margin-left: 5rpx;
+    }
+  }
+
+  .price {
+    color: #000000;
+    font-size: 26rpx;
+  }
+
+  .grid {
+    display: flex;
+    align-items: center;
+  }
+
+  .arrow_up_red {
+    border-color: transparent transparent #ff6a3c;
+  }
+
+  .arrow_down_red {
+    border-color: #ff6a3c transparent transparent;
+  }
+
+  .arrow_up_gray {
+    border-color: transparent transparent #ccc;
+  }
+
+  .arrow_down_gray {
+    border-color: #ccc transparent transparent;
+  }
+
+  .arrow {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    margin: 9rpx 10rpx;
+    position: relative;
+  }
+
+  .arrow_up {
+    border-width: 0 10rpx 10rpx;
+  }
+
+  .arrow_down {
+    border-width: 10rpx 10rpx 0;
+  }
+</style>

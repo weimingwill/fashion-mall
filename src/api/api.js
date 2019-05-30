@@ -15,6 +15,8 @@ const getUserInfo = (params) => wxRequest(params, apiMall + '/api/userCenter/get
 const getHomeDisvocerList = (params) => wxRequest(params, apiMall + '/api/mall/discoverList');
 //查询广告列表
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
+//广告商品列表
+const getAdGoodsList = (params) => wxRequest(params, apiMall + '/api/home/hostGoodsList');
 
 //一级分类
 const getRootCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/rootCtegoryList');
@@ -26,6 +28,7 @@ export default {
   getUserInfo,
   getHomeDisvocerList,
   getAdList,
+  getAdGoodsList,
   getRootCategoryList,
   getChildCategoryList,
 }
