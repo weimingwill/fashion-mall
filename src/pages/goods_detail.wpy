@@ -1,7 +1,6 @@
 <template>
   <view style="height: {{ windowHeight}}; overflow: hidden">
     <import src="../plugins/wxParse/wxParse.wxml" />
-
     <!-- Image Carousel -->
     <swiper
       indicator-dots="true"
@@ -71,6 +70,19 @@
       </view>
     </view>
 
+    <!-- Comments -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品评价</view>
+      <view class="block-content">
+        <commentList :list.sync="commentList"></commentList>
+        <view class="more-comment-btn"
+          wx:if="{{ commentList.length !== 0 }}" @tap="moreComment">
+          查看更多评论
+        </view>
+      </view>
+    </view>
+
     <!-- More Goods Info -->
     <view class="spacing"></view>
     <view class="block">
@@ -108,21 +120,51 @@
   import api from '@/api/api'
   import tip from '@/utils/tip'
   import wxParse from '../plugins/wxParse/wxParse'
+  import CommentList from '@/components/comment_list'
 
   export default class GoodsDetail extends wepy.page {
     config = {
       navigationBarTitleText: '商品详情'
     }
 
+    components = {
+      commentList: CommentList
+    }
+
     data = {
       windowHeight: '100%',
       goodsId: 0,
-      detail: {}
+      detail: {},
+      commentList: [
+        {
+          url: '../images/nav/icon_nav_01_new.png',
+          name: '浪子天涯',
+          time: '2018-10-01 10:10',
+          content: '东西收到,很满意!!真的是超级好的卖家,解答疑问不厌其烦,细致认真,关键是东西好,而且货物发得超快,包装仔细,值得信赖!',
+          start: 4.5,
+          children: [{
+            content: '跟你交易次次都这么成功和开心的．．希望我们以后有更多的交易吧．．．哈哈'
+          }]
+        },
+        {
+          url: '../images/nav/icon_nav_02_new.png',
+          name: '勇闯天下',
+          time: '2017-10-02 10:10',
+          content: '太感谢了，衣服很漂亮，朋友很喜欢，最主要的是买家太好了~~~大大的赞一个。。。 衣服，很合身',
+          start: 4,
+          children: []
+        }
+      ]
     }
 
     methods = {
       previewImage() {
         console.log('preview image')
+      },
+      moreComment() {
+        wepy.navigateTo({
+          url: '/pages/comment'
+        })
       }
     }
 
@@ -294,5 +336,20 @@
     }
   }
 
-
+  .more-comment-btn {
+    font-size: 28rpx;
+    height: 55rpx;
+    line-height: 55rpx;
+    text-align: center;
+    margin: 50rpx auto 0 auto;
+    width: 200rpx;
+    -moz-border-radius: 10rpx;
+    /* Firefox */
+    -webkit-border-radius: 10rpx;
+    /* Safari 和 Chrome */
+    border-radius: 10rpx;
+    /* Opera 10.5+, 以及使用了IE-CSS3的IE浏览器 */
+    color: #ff4856;
+    border: 1px solid #ff4856;
+  }
 </style>
