@@ -1,5 +1,7 @@
 <template>
   <view style="height: {{ windowHeight}}; overflow: hidden">
+    <import src="../plugins/wxParse/wxParse.wxml" />
+
     <!-- Image Carousel -->
     <swiper
       indicator-dots="true"
@@ -15,12 +17,97 @@
         </swiper-item>
       </block>
     </swiper>
+
+    <!-- Goods Info -->
+    <view class="goods-info">
+      <view class="goods-title">{{ detail.name }}</view>
+      <view class="goods-price-info">
+        <text class="price">￥{{ detail.price }}</text>
+        <!-- <view class="order-time {{ purchasetype === 2 || special === 1 ? 'hidden' : '' }}">
+          <timer :startTime.sync="startTime" :endTime.sync="endTime"></timer>
+        </view> -->
+      </view>
+      <view wx:if="{{ detail.freeShipNum !== 0 }}" class="free-delivery">满{{ detail.freeShipNum }}件包邮</view>
+    </view>
+
+    <!-- Order Info -->
+    <view class="order-info">
+      <view class="doc" wx:if="{{ special === 1 }}">库存:
+        <text class="num">{{ detail.stockNum }}件</text>
+      </view>
+      <view class="doc" wx:else>规定单数:
+        <text class="num">{{ detail.minBuyNum }}件成团</text>
+      </view>
+      <view class="doc">订单中:
+        <text class="num">已拼{{ detail.saleCount }}件</text>
+      </view>
+    </view>
+
+    <!-- Shipment -->
+    <view class="block">
+      <view class="block-title">拼货流程</view>
+      <view class="block-content">
+        <view class="process">
+          新款展示
+          <i class="iconfont icon-next"></i> 拼单结束
+          <i class="iconfont icon-next"></i> 生产商品
+          <i class="iconfont icon-next"></i> 商品检验
+          <i class="iconfont icon-next"></i> 商品发货
+        </view>
+        <view class="doc">
+          如若出现特殊情况外，发货时间则会延迟5-10天左右。
+        </view>
+      </view>
+    </view>
+
+    <!-- 拼单说明 -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">拼单说明</view>
+      <view class="block-content">
+        <view class="doc">
+          此商品在拼单期间可接收订单，如若超过拼单时间则不能下单；拼单结束后未付款订单系统将会自动取消，所以，亲下单以后请尽快付款。我们会以实际订单为准为您发货，如超过订单时间而又没有拼购到规定数量的，我们将会第一时间为您退款，请您放心购买!
+        </view>
+      </view>
+    </view>
+
+    <!-- More Goods Info -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品信息</view>
+      <view class="block-content">
+        <view class="table">
+          <view class="th"
+            wx:for="{{ detail.attrList }}" key="item" item="item" wx:key="key">
+            <view class="tr"
+              wx:for="{{ item }}" key="item" item="item" wx:key="key">
+              {{ item.attrName }}: {{ item.attrVal }}
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Goods Detail -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品详情</view>
+    </view>
+    <view class="big-images">
+      <view class="doc">
+        <view class="wxParse-p">
+          <template is="wxParse" data="{{ wxParseData: detailInfo.nodes }}">
+          </template>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 <script>
   import wepy from 'wepy'
   import api from '@/api/api'
   import tip from '@/utils/tip'
+  import wxParse from '../plugins/wxParse/wxParse'
 
   export default class GoodsDetail extends wepy.page {
     config = {
@@ -28,9 +115,9 @@
     }
 
     data = {
+      windowHeight: '100%',
       goodsId: 0,
-      detail: {},
-      windowHeight: '100%'
+      detail: {}
     }
 
     methods = {
@@ -49,6 +136,7 @@
 
       if (json.data.code === '0') {
         that.detail = json.data.data
+        wxParse.wxParse('detailInfo', 'html', that.detail.detailInfo, this)
       } else {
         tip.error(json.data.msg ? json.data.msg : '查看商品失败')
       }
@@ -63,6 +151,23 @@
       that.detail = {}
       this.getGoodsDetail()
     }
+
+    // wxParse
+    wxParseImgLoad(e) {
+    }
+
+    wxParseImgTap(e) {
+      let that = this
+      let nowImgUrl = e.target.dataset.src
+      let tagFrom = e.target.dataset.from
+      if (typeof tagFrom !== 'undefined' && tagFrom.length > 0) {
+        wx.previewImage({
+          current: nowImgUrl, // 当前显示图片的http链接
+          // urls: that.data[tagFrom].imageUrls // 需要预览的图片http链接列表
+          urls: that.bindData[tagFrom].imageUrls // 注释掉上面的 换着一行 (http://blog.csdn.net/zhuming3834/article/details/74380079)
+        })
+      }
+    }
   }
 </script>
 <style lang="less">
@@ -74,4 +179,120 @@
       height: 100%;
     }
   }
+
+  .goods-info {
+    border-top: 1px solid #ededed;
+    padding: 30rpx 30rpx;
+    background: #fff;
+
+    .goods-title {
+      overflow: hidden;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      font-size: 30rpx;
+      color: #333;
+    }
+
+    .goods-price-info {
+      padding: 20rpx 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .price {
+        color: #f73c3c;
+        font-size: 45rpx;
+      }
+
+      .free-delivery {
+        color: #808080;
+        font-size: 28rpx;
+        margin-top: 20rpx;
+      }
+
+      .order-time {
+        position: absolute;
+        right: 170rpx;
+        top: 0rpx;
+      }
+    }
+  }
+
+  .order-info {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 108rpx;
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+    padding: 0 30rpx;
+
+    .doc {
+      color: #808080;
+      .num {
+        color: #f73c3c;
+      }
+    }
+  }
+
+  .block {
+    padding: 27rpx 0rpx;
+    background: #fff;
+
+    .block-title {
+      color: #000;
+      height: 30rpx;
+      line-height: 30rpx;
+      border-left: 6px solid #f73c3c;
+      padding-left: 20rpx;
+    }
+
+    .block-content {
+      padding: 38rpx 22rpx;
+      .process {
+        font-size: 20rpx;
+        margin: 0 auto;
+        border: 1px solid #999999;
+        padding: 10rpx;
+        border-radius: 200px;
+        text-align: center;
+        margin-bottom: 25rpx;
+        color: #808080;
+      }
+      .doc {
+        color: #808080;
+        font-size: 26rpx;
+        line-height: 30rpx;
+      }
+    }
+    .table {
+      margin: 0 auto;
+      margin-top: -24rpx;
+      .th {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 24rpx;
+      }
+      .tr {
+        font-size: 26rpx;
+        color: #808080;
+        text-align: left;
+        flex: 1;
+      }
+    }
+  }
+
+  .big-images {
+    height: 100%;
+    display: block;
+    margin-bottom: 90rpx;
+
+    image {
+      width: 100%;
+    }
+  }
+
+
 </style>
