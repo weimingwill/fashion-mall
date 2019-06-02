@@ -17,6 +17,8 @@ const getHomeDisvocerList = (params) => wxRequest(params, apiMall + '/api/mall/d
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
 //广告商品列表
 const getAdGoodsList = (params) => wxRequest(params, apiMall + '/api/home/hostGoodsList');
+//查询商品详情信息
+const getGoodsDetail = (params) => wxRequest(params, apiMall + '/api/mall/goods');
 
 //一级分类
 const getRootCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/rootCtegoryList');
@@ -29,6 +31,7 @@ export default {
   getHomeDisvocerList,
   getAdList,
   getAdGoodsList,
+  getGoodsDetail,
   getRootCategoryList,
   getChildCategoryList,
 }
