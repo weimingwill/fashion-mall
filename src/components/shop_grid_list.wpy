@@ -2,10 +2,10 @@
 <template>
   <scroll-view scroll-y="true" class="swiper-item-box">
     <view class="shop_item">
-      <navigator class="list" wx:for="{{ list }}" wx:key="item" 
+      <navigator class="list" wx:for="{{ list }}" wx:key="item"
         url="/pages/goods_detail?id={{ item.id }}&purchasetype={{ purchasetype }}&special={{ special }}">
         <view class="image_box">
-          <image src="{{  item.thumLogo  }}" />
+          <image src="{{ item.thumLogo }}" />
         </view>
         <view class="goods">
           <view class="product_name" wx:if="{{ showTitle }}">{{ item.name }}</view>
@@ -27,12 +27,12 @@
     props = {
       list: [],
       purchasetype: {
-        default: 1  //类型: 1-商品订单; 2-商品补单
+        default: 1 // 类型: 1-商品订单; 2-商品补单
       },
-      special:{
-        default: 0 //0-正常入库; 1-特价专区和换货专区
+      special: {
+        default: 0 // 0-正常入库; 1-特价专区和换货专区
       },
-      showTitle:{
+      showTitle: {
         default: true
       }
     }
