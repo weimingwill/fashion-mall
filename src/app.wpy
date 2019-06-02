@@ -11,6 +11,7 @@ export default class extends wepy.app {
       'pages/cart',
       'pages/info',
       'pages/home_detail',
+      'pages/goods_detail',
       'pages/index'
     ],
     window: {

@@ -1,0 +1,77 @@
+<template>
+  <view style="height: {{ windowHeight}}; overflow: hidden">
+    <!-- Image Carousel -->
+    <swiper
+      indicator-dots="true"
+      autoplay="true"
+      interval="5000"
+      duration="500"
+      indicator-active-color="#ff6a3c"
+      indicator-color="#efefef"
+      class="swiper">
+      <block wx:for="{{ detail.photoList }}" key="item" item="item" wx:key="key">
+        <swiper-item>
+          <image src="{{ item.photo }}" data-src="{{ item.photo }}" class="swiper-image" @tap="previewImage" />
+        </swiper-item>
+      </block>
+    </swiper>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  import api from '@/api/api'
+  import tip from '@/utils/tip'
+
+  export default class GoodsDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '商品详情'
+    }
+
+    data = {
+      goodsId: 0,
+      detail: {},
+      windowHeight: '100%'
+    }
+
+    methods = {
+      previewImage() {
+        console.log('preview image')
+      }
+    }
+
+    async getGoodsDetail() {
+      let that = this
+      const json = await api.getGoodsDetail({
+        query: {
+          id: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.detail = json.data.data
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '查看商品失败')
+      }
+      that.$apply()
+    }
+
+    onLoad(option) {
+      let that = this
+
+      // Load goods detail
+      that.goodsId = option.id
+      that.detail = {}
+      this.getGoodsDetail()
+    }
+  }
+</script>
+<style lang="less">
+  .swiper {
+    height: 662rpx;
+
+    .swiper-image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+</style>
