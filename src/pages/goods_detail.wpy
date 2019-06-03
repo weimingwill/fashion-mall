@@ -131,8 +131,8 @@
           <i class="iconfont icon-collection"></i>
           <view class="doc">收藏</view>
         </view>
-        <view class="sy-bottom {{ canOrder ? 'btn_cart' : 'cart_color' }}" @tap="addToCart">加入购物车</view>
-        <view class="sy-bottom {{ canOrder ? 'btn_order' : 'order_color' }}" @tap="takeOrder">{{ purchaseText }}</view>
+        <view class="sy-bottom {{ canOrder ? 'btn-cart' : 'cart-color' }}" @tap="addToCart">加入购物车</view>
+        <view class="sy-bottom {{ canOrder ? 'btn-order' : 'order-color' }}" @tap="takeOrder">{{ purchaseText }}</view>
       </view>
     </view>
   </view>
@@ -494,19 +494,19 @@
       line-height: 60rpx;
       font-size: 30rpx;
     }
-    .btn_order {
+    .btn-order {
       background: #ff4856;
       color: #fff;
     }
-    .btn_cart {
+    .btn-cart {
       color: #fff;
       background: #ff6e30;
     }
-    .order_color {
+    .order-color {
       background: #A9A9A9;
       color: #fff;
     }
-    .cart_color {
+    .cart-color {
       color: #fff;
       background: #A9A9A9;
     }
