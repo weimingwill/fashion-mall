@@ -1,5 +1,5 @@
 <template>
-  <view style="height: {{ windowHeight}}; overflow: hidden">
+  <view style="height: {{ windowHeight }}; overflow: hidden">
     <import src="../plugins/wxParse/wxParse.wxml" />
     <!-- Image Carousel -->
     <swiper
@@ -113,6 +113,28 @@
         </view>
       </view>
     </view>
+
+    <!-- Bottom Function Bar -->
+    <view class="detail-bottom">
+      <view class="bottom-box">
+        <view class="item" @tap="goToHomePage">
+          <i class="iconfont icon-home"></i>
+          <view class="doc">首页</view>
+        </view>
+        <contact-button class="contact"></contact-button>
+        <view class="item">
+          <i class="iconfont icon-message"></i>
+          <view class="doc">客服</view>
+        </view>
+        <contact-button class="contact"></contact-button>
+        <view class="item {{ isFavorite ? 'favorite_active' : '' }}" @tap="toggleFavorite">
+          <i class="iconfont icon-collection"></i>
+          <view class="doc">收藏</view>
+        </view>
+        <view class="sy-bottom {{ canOrder ? 'btn_cart' : 'cart_color' }}" @tap="addToCart">加入购物车</view>
+        <view class="sy-bottom {{ canOrder ? 'btn_order' : 'order_color' }}" @tap="takeOrder">{{ purchaseText }}</view>
+      </view>
+    </view>
   </view>
 </template>
 <script>
@@ -121,6 +143,7 @@
   import tip from '@/utils/tip'
   import wxParse from '../plugins/wxParse/wxParse'
   import CommentList from '@/components/comment_list'
+  import { USER_SPECICAL_INFO } from '@/utils/constant'
 
   export default class GoodsDetail extends wepy.page {
     config = {
@@ -132,6 +155,8 @@
     }
 
     data = {
+      openId: '',
+
       windowHeight: '100%',
       goodsId: 0,
       detail: {},
@@ -154,17 +179,37 @@
           start: 4,
           children: []
         }
-      ]
+      ],
+
+      isFavorite: false,
+      canOrder: true,
+      purchaseText: '立即购买'
     }
 
     methods = {
       previewImage() {
         console.log('preview image')
       },
+
       moreComment() {
         wepy.navigateTo({
           url: '/pages/comment'
         })
+      },
+
+      goToHomePage() {
+        wepy.switchTab({
+          url: '/pages/home'
+        })
+      },
+
+      toggleFavorite() {
+        if (this.isFavorite) {
+          this.unfavoriteGoods()
+        } else {
+          this.favoriteGoods()
+        }
+      },
       }
     }
 
@@ -185,6 +230,65 @@
       that.$apply()
     }
 
+    async isGoodsFavorite() {
+      let that = this
+      let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
+      let openId = userSpecialInfo.openid
+      const json = await api.isGoodsFavorite({
+        query: {
+          openId: openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        if (json.data.isFavorite === 1) {
+          that.isFavorite = true
+        } else {
+          that.isFavorite = false
+        }
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '查看商品收藏失败')
+      }
+      that.$apply()
+    }
+
+    async favoriteGoods() {
+      let that = this
+      const json = await api.favoriteGoods({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.isFavorite = true
+        tip.toast('收藏成功')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '收藏失败')
+      }
+      that.$apply()
+    }
+
+    async unfavoriteGoods() {
+      let that = this
+      const json = await api.unfavoriteGoods({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.isFavorite = false
+        tip.toast('取消收藏成功')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '取消收藏失败')
+      }
+      that.$apply()
+    }
+
     onLoad(option) {
       let that = this
 
@@ -192,6 +296,14 @@
       that.goodsId = option.id
       that.detail = {}
       this.getGoodsDetail()
+    }
+
+    onShow() {
+      this.isGoodsFavorite()
+
+      // Get open id, this does not work with test appid
+      let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
+      this.openId = userSpecialInfo.openid
     }
 
     // wxParse
@@ -351,5 +463,70 @@
     /* Opera 10.5+, 以及使用了IE-CSS3的IE浏览器 */
     color: #ff4856;
     border: 1px solid #ff4856;
+  }
+
+  .detail-bottom {
+    width: 100%;
+    border-top: 1px solid #ededed;
+    position: fixed;
+    bottom: 0;
+    background: #fff;
+    z-index: 1001;
+    .bottom-box {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      .contact {
+        width: 100rpx;
+        height: 80rpx;
+        margin: 0 auto;
+        position: absolute;
+        text-align: center;
+        line-height: 80rpx;
+        left: 100rpx; // 在客服上面
+        opacity: 0;
+      }
+    }
+    .sy-bottom {
+      padding: 15rpx 40rpx;
+      height: 60rpx;
+      line-height: 60rpx;
+      font-size: 30rpx;
+    }
+    .btn_order {
+      background: #ff4856;
+      color: #fff;
+    }
+    .btn_cart {
+      color: #fff;
+      background: #ff6e30;
+    }
+    .order_color {
+      background: #A9A9A9;
+      color: #fff;
+    }
+    .cart_color {
+      color: #fff;
+      background: #A9A9A9;
+    }
+    .item:first-child {
+      border-right: 1px solid #efefef;
+    }
+    .item {
+      flex: 1;
+      text-align: center;
+      .doc {
+        font-size: 24rpx;
+      }
+    }
+    .favoritec_active {
+      .doc {
+        color: #ff4856;
+      }
+      .iconfont {
+        color: #ff4856;
+      }
+    }
   }
 </style>
