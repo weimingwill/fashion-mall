@@ -26,6 +26,10 @@ const unfavoriteGoods = (params) => wxRequest(params, apiMall + '/api/mall/goods
 //商品是否已收藏
 const isGoodsFavorite = (params) => wxRequest(params, apiMall + '/api/mall/goodsFavorite/goodsIsFavorite');
 
+// 购物车
+// 加入购物车
+const addToCart = (params) => wxRequest(params, apiMall + '/api/mall/goodsCart/add');
+
 //一级分类
 const getRootCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/rootCtegoryList');
 //二级三级分类
@@ -43,4 +47,5 @@ export default {
   isGoodsFavorite,
   getRootCategoryList,
   getChildCategoryList,
+  addToCart,
 }

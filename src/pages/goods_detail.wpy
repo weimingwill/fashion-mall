@@ -135,6 +135,46 @@
         <view class="sy-bottom {{ canOrder ? 'btn-order' : 'order-color' }}" @tap="takeOrder">{{ purchaseText }}</view>
       </view>
     </view>
+
+    <!-- Purchase Model -->
+    <view class="over-model {{ modelHidden ? 'hidden' : '' }}"></view>
+    <view class="panel-model {{ modelHidden ? 'hidden' : '' }}" animation="{{ animationData }}">
+      <view class="model-content">
+        <view class="header-box">
+          <view class="img-wrap">
+            <image class="goods-img" src="{{ detail.logo }}" />
+          </view>
+          <view class="product-wrap">
+            <view class="product-name">{{ detail.name }}</view>
+            <view class="price">￥ {{ detail.price }}</view>
+          </view>
+        </view>
+        <scroll-view scroll-y="true" style="height:400rpx">
+          <view class="rule-box"
+            wx:for="{{ detail.goodsSkuNameList }}" item="item" wx:key="key" wx:for-index="ex">
+            <view class="title">{{ item.skuName }}</view>
+            <view class="items">
+              <view class="item {{ item.current ? 'active' : '' }}"
+                wx:for="{{ item.skuValList }}" item="item" wx:key="key" @tap.stop="selectAttribute"
+                data-id="{{ item.skuValId }}" data-nameid="{{ item.skuNameId }}" data-index="{{ ex }}">
+                {{ item.skuVal }}
+              </view>
+            </view>
+          </view>
+          <view class="num-box">
+            <view class="title">数量</view>
+            <view class="stock">库存:{{ detail.stockNum }}件</view>
+            <view class="buy-num">
+              <view class="minus-btn {{ item.number === 1 ? 'disabled' : '' }}" catchtap="minusOrderNumber" data-index="{{ index }}">-</view>
+              <input type="number" bindinput="bindOrderNumber" value="{{ orderNumber }}" />
+              <view class="plus-btn {{ item.number === 10 ? 'disabled' : '' }}" catchtap="addOrderNumber" data-index="{{ index }}">+</view>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="colse-model" @tap="closeModel"><i class="iconfont icon-close"></i></view>
+      </view>
+      <view class="comfire-btn" @tap.stop="confirmBuy">确定</view>
+    </view>
   </view>
 </template>
 <script>
@@ -143,7 +183,7 @@
   import tip from '@/utils/tip'
   import wxParse from '../plugins/wxParse/wxParse'
   import CommentList from '@/components/comment_list'
-  import { USER_SPECICAL_INFO } from '@/utils/constant'
+  import { SYSTEM_INFO, USER_SPECICAL_INFO } from '@/utils/constant'
 
   export default class GoodsDetail extends wepy.page {
     config = {
@@ -183,7 +223,14 @@
 
       isFavorite: false,
       canOrder: true,
-      purchaseText: '立即购买'
+      purchaseText: '立即购买',
+      modelHidden: true,
+      animation: {},
+      animationData: '',
+      orderType: 1, // 购买方式: 1-加购物车, 2-立即购买
+      orderNumber: 1,
+      purchaseType: 1, // 1-正常购买, 2-补货
+      special: 0 // 0-正常入库, 1-特价专区和换货专区
     }
 
     methods = {
@@ -210,6 +257,84 @@
           this.favoriteGoods()
         }
       },
+
+      addToCart() {
+        if (this.canOrder) {
+          this.showPurchaseModel()
+          this.orderType = 1
+        }
+      },
+
+      takeOrder() {
+        if (this.canOrder) {
+          this.showPurchaseModel()
+          this.orderType = 2
+        }
+      },
+
+      selectAttribute(e) {
+        let id = e.currentTarget.dataset.id
+        let nameid = e.currentTarget.dataset.nameid
+        let index = e.currentTarget.dataset.index
+        for (let i = 0; i < this.detail.goodsSkuNameList.length; i++) {
+          let skuValList = this.detail.goodsSkuNameList[i].skuValList
+          for (let j = 0; j < skuValList.length; j++) {
+            let skuVal = skuValList[j]
+            if (skuVal.skuNameId !== nameid) {
+              continue
+            }
+
+            skuVal.current = false
+            if (skuVal.skuValId !== id) {
+              continue
+            }
+
+            skuVal.current = true
+            this.detail.goodsSkuValIds[index] = id
+            for (let k = 0; k < this.detail.goodsSkuList.length; k++) {
+              if ('[' + this.detail.goodsSkuValIds.toString() + ']' === this.detail.goodsSkuList[k].skuValIds) {
+                this.detail.stockNum = this.detail.goodsSkuList[k].stockNum
+                this.detail.price = this.detail.goodsSkuList[k].price
+                this.$apply()
+                break
+              }
+            }
+          }
+        }
+      },
+
+      addOrderNumber() {
+        this.orderNumber++
+      },
+
+      minusOrderNumber() {
+        if (this.orderNumber > 1) {
+          this.orderNumber--
+        }
+      },
+
+      bindOrderNumber(e) {
+        this.orderNumber = e.detail.value
+      },
+
+      confirmBuy() {
+        if (this.orderType === 1) {
+          this.addCart()
+        } else if (this.orderType === 2) {
+          this.purchase()
+        }
+      },
+
+      closeModel() {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
       }
     }
 
@@ -230,6 +355,80 @@
       that.$apply()
     }
 
+    // 购买
+    async showPurchaseModel() {
+      this.animation.height('783rpx').step()
+      this.setData({
+        animationData: this.animation.export()
+      })
+      setTimeout(() => {
+        this.modelHidden = false
+        let systemInfo = wepy.getStorageSync(SYSTEM_INFO)
+        this.windowHeight = systemInfo.windowHeight
+        this.$apply()
+      }, 100)
+    }
+
+    // 加入购物车
+    async addCart() {
+      let that = this
+      const json = await api.addToCart({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId,
+          goodsSkuId: this.detail.goodsSkuValIds,
+          purchaseType: this.purchaseType,
+          num: this.orderNumber
+        }
+      })
+
+      if (json.data.code === '0') {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
+        tip.success('成功加入购物车')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '无法加入购物车')
+      }
+    }
+
+    // 立即购买
+    async purchase() {
+      let that = this
+      const json = await api.addToCart({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId,
+          goodsSkuId: this.detail.goodsSkuValIds,
+          purchaseType: this.purchaseType,
+          num: this.orderNumber
+        }
+      })
+      if (json.data.code === '0') {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
+        wepy.navigateTo({
+          url: '/pages/comfire_order?goodsId=' + that.goodsId + '&purchasetype=' + that.purchaseType
+        })
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '无法立刻购买')
+      }
+    }
+
+    // 收藏
     async isGoodsFavorite() {
       let that = this
       let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
@@ -290,11 +489,19 @@
     }
 
     onLoad(option) {
-      let that = this
+      this.goodsId = option.id
+      this.detail = {}
+      this.purchaseType = (option.purchasetype === undefined) ? 1 : option.purchasetype
+      this.purchaseText = (this.purchaseType === 2) ? '申请补货' : '立即购买'
+      this.special = (option.special !== undefined) ? 0 : option.special
+      this.orderNumber = 1
+      this.isFavorite = false
+      this.canOrder = true
+      this.hidden = true
+      this.windowHeight = '100%'
+      this.$apply()
 
       // Load goods detail
-      that.goodsId = option.id
-      that.detail = {}
       this.getGoodsDetail()
     }
 
@@ -304,6 +511,15 @@
       // Get open id, this does not work with test appid
       let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
       this.openId = userSpecialInfo.openid
+
+      // 创建动画
+      var animation = wx.createAnimation({
+        transformOrigin: '50% 50%',
+        duration: 200,
+        timingFunction: 'linear',
+        delay: 0
+      })
+      this.animation = animation
     }
 
     // wxParse
@@ -528,5 +744,183 @@
         color: #ff4856;
       }
     }
+  }
+
+  .over-model {
+    position: fixed;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    top: 0;
+  }
+
+  .panel-model {
+    position: fixed;
+    height: 0rpx;
+    width: 100%;
+    z-index: 1002;
+    background: #fff;
+    bottom: 0;
+  }
+
+  .model-content {
+    padding: 20rpx;
+    position: relative;
+  }
+
+  .header-box {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 26rpx;
+
+    .img-wrap {
+      height: 200rpx;
+      width: 200rpx;
+      background: #000;
+    }
+
+    .goods-img {
+      height: 200rpx;
+      width: 200rpx;
+      background: #000;
+    }
+
+    .product-wrap {
+      padding: 20rpx;
+    }
+
+    .product-name {
+      color: #666;
+    }
+
+    .price {
+      color: #e11500;
+      font-size: 36rpx;
+      padding-top: 32rpx;
+    }
+  }
+
+  .rule-box {
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 26rpx;
+
+    .title {
+      color: #4c4c4c;
+      font-size: 32rpx;
+      margin-top: 10rpx;
+    }
+
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 5rpx;
+      margin-left: -20rpx;
+    }
+
+    .item {
+      padding: 15rpx 28rpx;
+      background: #e6e6e6;
+      color: #000;
+      margin-left: 20rpx;
+      margin-top: 10rpx;
+      border-radius: 10rpx;
+    }
+
+    .active {
+      background: #ed394a;
+      color: #fff;
+    }
+  }
+
+  .num-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15rpx 0rpx;
+
+    .title {
+      color: #4c4c4c;
+      font-size: 32rpx;
+    }
+  }
+
+  .buy-num {
+    width: 170rpx;
+    height: 48rpx;
+    line-height: 48rpx;
+    display: flex;
+    font-size: 24rpx;
+    text-align: center;
+
+    .minus-btn {
+      width: 48rpx;
+      height: 100%;
+      border-left: 1rpx solid #ccc;
+      border-bottom: 1rpx solid #ccc;
+      border-top: 1rpx solid #ccc;
+      border-bottom-left-radius: 6rpx;
+      border-top-left-radius: 6rpx;
+    }
+
+    .minus-btn.disabled {
+      background-color: #f5f5f9;
+      border-left: 1rpx solid #eee;
+      border-bottom: 1rpx solid #eee;
+      border-top: 1rpx solid #eee;
+      color: #ccc;
+    }
+
+    .plus-btn {
+      width: 48rpx;
+      height: 100%;
+      border-right: 1rpx solid #ccc;
+      border-bottom: 1rpx solid #ccc;
+      border-top: 1rpx solid #ccc;
+      border-bottom-right-radius: 6rpx;
+      border-top-right-radius: 6rpx;
+    }
+
+    .plus-btn.disabled {
+      background-color: #f5f5f9;
+      border-right: 1rpx solid #eee;
+      border-bottom: 1rpx solid #eee;
+      border-top: 1rpx solid #eee;
+      color: #ccc;
+    }
+
+    input {
+      width: 68rpx;
+      height: 48rpx;
+      min-height: 48rpx;
+      text-align: center;
+      font-size: 24rpx;
+      border: 1rpx solid #ccc;
+    }
+  }
+
+  .colse-model {
+    position: absolute;
+    right: 10rpx;
+    top: 10rpx;
+
+    .icon-close {
+      color: #e11500;
+      font-size: 32rpx;
+    }
+  }
+
+  .comfire-btn {
+    height: 100rpx;
+    line-height: 100rpx;
+    width: 100%;
+    background: #ff6e30;
+    text-align: center;
+    color: #fff;
+    position: absolute;
+    bottom: 0;
+    z-index: 10003;
   }
 </style>
