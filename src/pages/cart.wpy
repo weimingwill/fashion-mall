@@ -1,5 +1,14 @@
 <template>
-  <view class="container">
+  <view class="cart">
+    <view class="empty-cart">
+      <image src="../images/empty_cart.png" class="empty-cart-img" />
+      <view class="empty-cart-text">购物车还是空的</view>
+      <view class="btn-block">
+        <view class="block btn-group">
+          <view class="btn btn-shop" @tap="goToHome">去逛逛</view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -21,6 +30,11 @@
     }
 
     methods = {
+      goToHome() {
+        wepy.switchTab({
+          url: '/pages/home'
+        })
+      }
     }
 
     events = {
@@ -31,4 +45,57 @@
   }
 </script>
 <style lang="less">
+  .cart {
+    background: #f7f7f7;
+  }
+
+  .empty-cart {
+    margin-top: 100rpx;
+    .btn-block {
+      display: flex;
+      width: 100%;
+    }
+    .block {
+      margin: 0 auto;
+      text-align: center;
+      display: flex;
+      align-items: center;
+    }
+    .btn-group {
+      display: flex;
+      align-items: center;
+      padding-top: 100rpx;
+      .btn {
+        font-size: 30rpx;
+        padding: 22rpx 55rpx;
+        text-align: center;
+        margin: 0 auto;
+        width: 100%;
+        -moz-border-radius: 10rpx;
+        /* Firefox */
+        -webkit-border-radius: 10rpx;
+        /* Safari 和 Chrome */
+        border-radius: 10rpx;
+        /* Opera 10.5+, 以及使用了IE-CSS3的IE浏览器 */
+      }
+      .btn-shop {
+        background: #ed601b;
+        color: #fff;
+        margin-left: 1rpx;
+      }
+    }
+  }
+
+  .empty-cart-img {
+    width: 220rpx;
+    height: 177rpx;
+    display: block;
+    margin: 0 auto;
+  }
+  .empty-cart-text {
+    font-size: 32rpx;
+    color: #999;
+    margin-top: 20rpx;
+    text-align: center;
+  }
 </style>
