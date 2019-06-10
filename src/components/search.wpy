@@ -1,0 +1,103 @@
+<template>
+  <view wx:if="{{ show == 1 }}" class="content">
+    <view class="search">
+      <view class="serch-content">
+        <i class="iconfont icon-search"></i>
+        <input type="text" name="search-input" bindinput="searchInput" class="search-input"
+          focus="true" value="{{ searchInput }}" confirm-type="search" placeholder="搜索商品" />
+        <i wx:if="{{ searchInput != '' }}" @tap="delText" class="iconfont icon-del"></i>
+      </view>
+      <button class="btn btn-cancel" @tap="goBack()" wx:if="{{ searchInput=='' }}">取消</button>
+      <button class="btn btn-search" @tap="search()" wx:else>搜索</button>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class Search extends wepy.component {
+    data = {
+      searchInput: '',
+      show: 1
+    }
+
+    methods = {
+      searchInput(e) {
+        this.searchInput = e.detail.value
+        this.$apply()
+      },
+
+      goBack() {
+        wepy.navigateBack({
+          delta: 1 // 回退前 delta(默认为1) 页面
+        })
+      },
+
+      search() {
+        this.$emit('searchValue', this.searchInput)
+      },
+
+      delText() {
+        this.searchInput = ''
+        this.$apply()
+      },
+
+      show(param) {
+        this.show = param
+        this.$apply()
+      }
+    }
+  }
+</script>
+<style lang="less">
+  .content {
+    padding: 10rpx;
+  }
+
+  .search {
+    align-items: center;
+    display: flex;
+    margin: 0 auto;
+    width: 680rpx;
+    .serch-content {
+      display: flex;
+      align-items: center;
+      border-radius: 300rpx;
+      color: #333;
+      width: 560rpx;
+      background: #efefef;
+      padding: 5rpx 12rpx;
+      height: 65rpx;
+      .search-input {
+        font-size: 28rpx;
+        width: 100%;
+      }
+    }
+
+    .icon-search {
+      font-size: 40rpx;
+    }
+
+    .btn {
+      width: 120rpx;
+      height: 65rpx;
+      font-size: 28rpx;
+      line-height: 65rpx;
+      margin-left: 20rpx;
+      padding-left: 5rpx;
+      padding-right: 5rpx;
+    }
+
+    .btn-search {
+      color: #fff;
+      background: #e2413c;
+    }
+
+    .icon-del {
+      height: 60rpx;
+      line-height: 60rpx;
+      width: 60rpx;
+      font-size: 40rpx;
+    }
+  }
+</style>

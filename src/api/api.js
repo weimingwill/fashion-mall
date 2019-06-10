@@ -17,6 +17,8 @@ const getHomeDisvocerList = (params) => wxRequest(params, apiMall + '/api/mall/d
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
 //广告商品列表
 const getAdGoodsList = (params) => wxRequest(params, apiMall + '/api/home/hostGoodsList');
+//查询商品列表
+const getGoodsList = (params) => wxRequest(params, apiMall + '/api/mall/searchGoodsList');
 //查询商品详情信息
 const getGoodsDetail = (params) => wxRequest(params, apiMall + '/api/mall/goods');
 //商品收藏
@@ -35,12 +37,21 @@ const getRootCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/r
 //二级三级分类
 const getChildCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/childGoodsCatetoryList');
 
+//查询关键字保存
+const addSearchKeyword = (params) => wxRequest(params, apiMall + '/api/searchkeyword/add');
+//查询关键字列表
+const getSearchKeywordList = (params) => wxRequest(params, apiMall + '/api/searchkeyword/list');
+//查询关键字清除
+const clearSearchKeyword = (params) => wxRequest(params, apiMall + '/api/searchkeyword/clear');
+
+
 export default {
   wxJsCode2Session,
   getUserInfo,
   getHomeDisvocerList,
   getAdList,
   getAdGoodsList,
+  getGoodsList,
   getGoodsDetail,
   favoriteGoods,
   unfavoriteGoods,
@@ -48,4 +59,7 @@ export default {
   getRootCategoryList,
   getChildCategoryList,
   addToCart,
+  addSearchKeyword,
+  getSearchKeywordList,
+  clearSearchKeyword
 }
