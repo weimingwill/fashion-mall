@@ -17,3 +17,9 @@ export const USER_INFO = "userInfo";
 export const SYSTEM_INFO = "systemInfo";
 
 export const SELECTED_CLASS_CODE = "selectedClassCode"
+
+/**
+ * 搜索历史
+ * @type {Array}
+ */
+export const SEARCH_KEYWORDS = "searchHistoryKeywords"
