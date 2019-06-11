@@ -89,7 +89,6 @@
 
   console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
 
-
   export default class Index extends wepy.page {
     config = {
       navigationBarTitleText: 'test'
