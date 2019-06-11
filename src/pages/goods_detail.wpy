@@ -1,0 +1,935 @@
+<template>
+  <view style="height: {{ windowHeight }}; overflow: hidden">
+    <import src="../plugins/wxParse/wxParse.wxml" />
+    <!-- Image Carousel -->
+    <swiper
+      indicator-dots="true"
+      autoplay="true"
+      interval="5000"
+      duration="500"
+      indicator-active-color="#ff6a3c"
+      indicator-color="#efefef"
+      class="swiper">
+      <block wx:for="{{ detail.photoList }}" key="item" item="item" wx:key="key">
+        <swiper-item>
+          <image src="{{ item.photo }}" data-src="{{ item.photo }}" class="swiper-image" @tap="previewImage" />
+        </swiper-item>
+      </block>
+    </swiper>
+
+    <!-- Goods Info -->
+    <view class="goods-info">
+      <view class="goods-title">{{ detail.name }}</view>
+      <view class="goods-price-info">
+        <text class="price">￥{{ detail.price }}</text>
+        <!-- <view class="order-time {{ purchasetype === 2 || special === 1 ? 'hidden' : '' }}">
+          <timer :startTime.sync="startTime" :endTime.sync="endTime"></timer>
+        </view> -->
+      </view>
+      <view wx:if="{{ detail.freeShipNum !== 0 }}" class="free-delivery">满{{ detail.freeShipNum }}件包邮</view>
+    </view>
+
+    <!-- Order Info -->
+    <view class="order-info">
+      <view class="doc" wx:if="{{ special === 1 }}">库存:
+        <text class="num">{{ detail.stockNum }}件</text>
+      </view>
+      <view class="doc" wx:else>规定单数:
+        <text class="num">{{ detail.minBuyNum }}件成团</text>
+      </view>
+      <view class="doc">订单中:
+        <text class="num">已拼{{ detail.saleCount }}件</text>
+      </view>
+    </view>
+
+    <!-- Shipment -->
+    <view class="block">
+      <view class="block-title">拼货流程</view>
+      <view class="block-content">
+        <view class="process">
+          新款展示
+          <i class="iconfont icon-next"></i> 拼单结束
+          <i class="iconfont icon-next"></i> 生产商品
+          <i class="iconfont icon-next"></i> 商品检验
+          <i class="iconfont icon-next"></i> 商品发货
+        </view>
+        <view class="doc">
+          如若出现特殊情况外，发货时间则会延迟5-10天左右。
+        </view>
+      </view>
+    </view>
+
+    <!-- 拼单说明 -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">拼单说明</view>
+      <view class="block-content">
+        <view class="doc">
+          此商品在拼单期间可接收订单，如若超过拼单时间则不能下单；拼单结束后未付款订单系统将会自动取消，所以，亲下单以后请尽快付款。我们会以实际订单为准为您发货，如超过订单时间而又没有拼购到规定数量的，我们将会第一时间为您退款，请您放心购买!
+        </view>
+      </view>
+    </view>
+
+    <!-- Comments -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品评价</view>
+      <view class="block-content">
+        <commentList :list.sync="commentList"></commentList>
+        <view class="more-comment-btn"
+          wx:if="{{ commentList.length !== 0 }}" @tap="moreComment">
+          查看更多评论
+        </view>
+      </view>
+    </view>
+
+    <!-- More Goods Info -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品信息</view>
+      <view class="block-content">
+        <view class="table">
+          <view class="th"
+            wx:for="{{ detail.attrList }}" key="item" item="item" wx:key="key">
+            <view class="tr"
+              wx:for="{{ item }}" key="item" item="item" wx:key="key">
+              {{ item.attrName }}: {{ item.attrVal }}
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Goods Detail -->
+    <view class="spacing"></view>
+    <view class="block">
+      <view class="block-title">商品详情</view>
+    </view>
+    <view class="big-images">
+      <view class="doc">
+        <view class="wxParse-p">
+          <template is="wxParse" data="{{ wxParseData: detailInfo.nodes }}">
+          </template>
+        </view>
+      </view>
+    </view>
+
+    <!-- Bottom Function Bar -->
+    <view class="detail-bottom">
+      <view class="bottom-box">
+        <view class="item" @tap="goToHomePage">
+          <i class="iconfont icon-home"></i>
+          <view class="doc">首页</view>
+        </view>
+        <contact-button class="contact"></contact-button>
+        <view class="item">
+          <i class="iconfont icon-message"></i>
+          <view class="doc">客服</view>
+        </view>
+        <contact-button class="contact"></contact-button>
+        <view class="item {{ isFavorite ? 'favorite_active' : '' }}" @tap="toggleFavorite">
+          <i class="iconfont icon-collection"></i>
+          <view class="doc">收藏</view>
+        </view>
+        <view class="sy-bottom {{ canOrder ? 'btn-cart' : 'cart-color' }}" @tap="addToCart">加入购物车</view>
+        <view class="sy-bottom {{ canOrder ? 'btn-order' : 'order-color' }}" @tap="takeOrder">{{ purchaseText }}</view>
+      </view>
+    </view>
+
+    <!-- Purchase Model -->
+    <view class="over-model {{ modelHidden ? 'hidden' : '' }}"></view>
+    <view class="panel-model {{ modelHidden ? 'hidden' : '' }}" animation="{{ animationData }}">
+      <view class="model-content">
+        <view class="header-box">
+          <view class="img-wrap">
+            <image class="goods-img" src="{{ detail.logo }}" />
+          </view>
+          <view class="product-wrap">
+            <view class="product-name">{{ detail.name }}</view>
+            <view class="price">￥ {{ detail.price }}</view>
+          </view>
+        </view>
+        <scroll-view scroll-y="true" style="height:400rpx">
+          <view class="rule-box"
+            wx:for="{{ detail.goodsSkuNameList }}" item="item" wx:key="key" wx:for-index="ex">
+            <view class="title">{{ item.skuName }}</view>
+            <view class="items">
+              <view class="item {{ item.current ? 'active' : '' }}"
+                wx:for="{{ item.skuValList }}" item="item" wx:key="key" @tap.stop="selectAttribute"
+                data-id="{{ item.skuValId }}" data-nameid="{{ item.skuNameId }}" data-index="{{ ex }}">
+                {{ item.skuVal }}
+              </view>
+            </view>
+          </view>
+          <view class="num-box">
+            <view class="title">数量</view>
+            <view class="stock">库存:{{ detail.stockNum }}件</view>
+            <view class="buy-num">
+              <view class="minus-btn {{ item.number === 1 ? 'disabled' : '' }}" catchtap="minusOrderNumber" data-index="{{ index }}">-</view>
+              <input type="number" bindinput="bindOrderNumber" value="{{ orderNumber }}" />
+              <view class="plus-btn {{ item.number === 10 ? 'disabled' : '' }}" catchtap="addOrderNumber" data-index="{{ index }}">+</view>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="colse-model" @tap="closeModel"><i class="iconfont icon-close"></i></view>
+      </view>
+      <view class="comfire-btn" @tap.stop="confirmBuy">确定</view>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  import api from '@/api/api'
+  import tip from '@/utils/tip'
+  import wxParse from '../plugins/wxParse/wxParse'
+  import CommentList from '@/components/comment_list'
+  import { SYSTEM_INFO, USER_SPECICAL_INFO } from '@/utils/constant'
+
+  export default class GoodsDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '商品详情'
+    }
+
+    components = {
+      commentList: CommentList
+    }
+
+    data = {
+      openId: '',
+
+      windowHeight: '100%',
+      goodsId: 0,
+      detail: {},
+      commentList: [
+        {
+          url: '../images/nav/icon_nav_01_new.png',
+          name: '浪子天涯',
+          time: '2018-10-01 10:10',
+          content: '东西收到,很满意!!真的是超级好的卖家,解答疑问不厌其烦,细致认真,关键是东西好,而且货物发得超快,包装仔细,值得信赖!',
+          start: 4.5,
+          children: [{
+            content: '跟你交易次次都这么成功和开心的．．希望我们以后有更多的交易吧．．．哈哈'
+          }]
+        },
+        {
+          url: '../images/nav/icon_nav_02_new.png',
+          name: '勇闯天下',
+          time: '2017-10-02 10:10',
+          content: '太感谢了，衣服很漂亮，朋友很喜欢，最主要的是买家太好了~~~大大的赞一个。。。 衣服，很合身',
+          start: 4,
+          children: []
+        }
+      ],
+
+      isFavorite: false,
+      canOrder: true,
+      purchaseText: '立即购买',
+      modelHidden: true,
+      animation: {},
+      animationData: '',
+      orderType: 1, // 购买方式: 1-加购物车, 2-立即购买
+      orderNumber: 1,
+      purchaseType: 1, // 1-正常购买, 2-补货
+      special: 0 // 0-正常入库, 1-特价专区和换货专区
+    }
+
+    methods = {
+      previewImage(e) {
+        let current = e.target.dataset.src
+        let images = []
+        let obj = this.detail.photoList
+        Object.keys(obj).forEach((item) => {
+          images.push(obj[item].photo)
+        })
+        wx.previewImage({
+          current: current, // 当前显示图片的http链接
+          urls: images // 需要预览的图片http链接列表
+        })
+      },
+
+      moreComment() {
+        wepy.navigateTo({
+          url: '/pages/comment'
+        })
+      },
+
+      goToHomePage() {
+        wepy.switchTab({
+          url: '/pages/home'
+        })
+      },
+
+      toggleFavorite() {
+        if (this.isFavorite) {
+          this.unfavoriteGoods()
+        } else {
+          this.favoriteGoods()
+        }
+      },
+
+      addToCart() {
+        if (this.canOrder) {
+          this.showPurchaseModel()
+          this.orderType = 1
+        }
+      },
+
+      takeOrder() {
+        if (this.canOrder) {
+          this.showPurchaseModel()
+          this.orderType = 2
+        }
+      },
+
+      selectAttribute(e) {
+        let id = e.currentTarget.dataset.id
+        let nameid = e.currentTarget.dataset.nameid
+        let index = e.currentTarget.dataset.index
+        for (let i = 0; i < this.detail.goodsSkuNameList.length; i++) {
+          let skuValList = this.detail.goodsSkuNameList[i].skuValList
+          for (let j = 0; j < skuValList.length; j++) {
+            let skuVal = skuValList[j]
+            if (skuVal.skuNameId !== nameid) {
+              continue
+            }
+
+            skuVal.current = false
+            if (skuVal.skuValId !== id) {
+              continue
+            }
+
+            skuVal.current = true
+            this.detail.goodsSkuValIds[index] = id
+            for (let k = 0; k < this.detail.goodsSkuList.length; k++) {
+              if ('[' + this.detail.goodsSkuValIds.toString() + ']' === this.detail.goodsSkuList[k].skuValIds) {
+                this.detail.stockNum = this.detail.goodsSkuList[k].stockNum
+                this.detail.price = this.detail.goodsSkuList[k].price
+                this.$apply()
+                break
+              }
+            }
+          }
+        }
+      },
+
+      addOrderNumber() {
+        this.orderNumber++
+      },
+
+      minusOrderNumber() {
+        if (this.orderNumber > 1) {
+          this.orderNumber--
+        }
+      },
+
+      bindOrderNumber(e) {
+        this.orderNumber = e.detail.value
+      },
+
+      confirmBuy() {
+        if (this.orderType === 1) {
+          this.addCart()
+        } else if (this.orderType === 2) {
+          this.purchase()
+        }
+      },
+
+      closeModel() {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
+      }
+    }
+
+    async getGoodsDetail() {
+      let that = this
+      const json = await api.getGoodsDetail({
+        query: {
+          id: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.detail = json.data.data
+        wxParse.wxParse('detailInfo', 'html', that.detail.detailInfo, this)
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '查看商品失败')
+      }
+      that.$apply()
+    }
+
+    // 购买
+    async showPurchaseModel() {
+      this.animation.height('783rpx').step()
+      this.setData({
+        animationData: this.animation.export()
+      })
+      setTimeout(() => {
+        this.modelHidden = false
+        let systemInfo = wepy.getStorageSync(SYSTEM_INFO)
+        this.windowHeight = systemInfo.windowHeight
+        this.$apply()
+      }, 100)
+    }
+
+    // 加入购物车
+    async addCart() {
+      let that = this
+      const json = await api.addToCart({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId,
+          goodsSkuId: this.detail.goodsSkuValIds,
+          purchaseType: this.purchaseType,
+          num: this.orderNumber
+        }
+      })
+
+      if (json.data.code === '0') {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
+        tip.success('成功加入购物车')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '无法加入购物车')
+      }
+    }
+
+    // 立即购买
+    async purchase() {
+      let that = this
+      const json = await api.addToCart({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId,
+          goodsSkuId: this.detail.goodsSkuValIds,
+          purchaseType: this.purchaseType,
+          num: this.orderNumber
+        }
+      })
+      if (json.data.code === '0') {
+        this.windowHeight = '100%'
+        this.animation.height(0).step()
+        this.setData({
+          animationData: this.animation.export()
+        })
+        setTimeout(() => {
+          this.modelHidden = true
+          this.$apply()
+        }, 100)
+        wepy.navigateTo({
+          url: '/pages/comfire_order?goodsId=' + that.goodsId + '&purchasetype=' + that.purchaseType
+        })
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '无法立刻购买')
+      }
+    }
+
+    // 收藏
+    async isGoodsFavorite() {
+      let that = this
+      let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
+      let openId = userSpecialInfo.openid
+      const json = await api.isGoodsFavorite({
+        query: {
+          openId: openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        if (json.data.isFavorite === 1) {
+          that.isFavorite = true
+        } else {
+          that.isFavorite = false
+        }
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '查看商品收藏失败')
+      }
+      that.$apply()
+    }
+
+    async favoriteGoods() {
+      let that = this
+      const json = await api.favoriteGoods({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.isFavorite = true
+        tip.toast('收藏成功')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '收藏失败')
+      }
+      that.$apply()
+    }
+
+    async unfavoriteGoods() {
+      let that = this
+      const json = await api.unfavoriteGoods({
+        query: {
+          openId: that.openId,
+          goodsId: that.goodsId
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.isFavorite = false
+        tip.toast('取消收藏成功')
+      } else {
+        tip.error(json.data.msg ? json.data.msg : '取消收藏失败')
+      }
+      that.$apply()
+    }
+
+    onLoad(option) {
+      this.goodsId = option.id
+      this.detail = {}
+      this.purchaseType = (option.purchasetype === undefined) ? 1 : option.purchasetype
+      this.purchaseText = (this.purchaseType === 2) ? '申请补货' : '立即购买'
+      this.special = (option.special !== undefined) ? 0 : option.special
+      this.orderNumber = 1
+      this.isFavorite = false
+      this.canOrder = true
+      this.hidden = true
+      this.windowHeight = '100%'
+      this.$apply()
+
+      // Load goods detail
+      this.getGoodsDetail()
+    }
+
+    onShow() {
+      this.isGoodsFavorite()
+
+      // Get open id, this does not work with test appid
+      let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
+      this.openId = userSpecialInfo.openid
+
+      // 创建动画
+      var animation = wx.createAnimation({
+        transformOrigin: '50% 50%',
+        duration: 200,
+        timingFunction: 'linear',
+        delay: 0
+      })
+      this.animation = animation
+    }
+
+    // wxParse
+    wxParseImgLoad(e) {
+    }
+
+    wxParseImgTap(e) {
+      let that = this
+      let nowImgUrl = e.target.dataset.src
+      let tagFrom = e.target.dataset.from
+      if (typeof tagFrom !== 'undefined' && tagFrom.length > 0) {
+        wx.previewImage({
+          current: nowImgUrl, // 当前显示图片的http链接
+          // urls: that.data[tagFrom].imageUrls // 需要预览的图片http链接列表
+          urls: that.bindData[tagFrom].imageUrls // 注释掉上面的 换着一行 (http://blog.csdn.net/zhuming3834/article/details/74380079)
+        })
+      }
+    }
+  }
+</script>
+<style lang="less">
+  .swiper {
+    height: 662rpx;
+
+    .swiper-image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .goods-info {
+    border-top: 1px solid #ededed;
+    padding: 30rpx 30rpx;
+    background: #fff;
+
+    .goods-title {
+      overflow: hidden;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      font-size: 30rpx;
+      color: #333;
+    }
+
+    .goods-price-info {
+      padding: 20rpx 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .price {
+        color: #f73c3c;
+        font-size: 45rpx;
+      }
+
+      .free-delivery {
+        color: #808080;
+        font-size: 28rpx;
+        margin-top: 20rpx;
+      }
+
+      .order-time {
+        position: absolute;
+        right: 170rpx;
+        top: 0rpx;
+      }
+    }
+  }
+
+  .order-info {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 108rpx;
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+    padding: 0 30rpx;
+
+    .doc {
+      color: #808080;
+      .num {
+        color: #f73c3c;
+      }
+    }
+  }
+
+  .block {
+    padding: 27rpx 0rpx;
+    background: #fff;
+
+    .block-title {
+      color: #000;
+      height: 30rpx;
+      line-height: 30rpx;
+      border-left: 6px solid #f73c3c;
+      padding-left: 20rpx;
+    }
+
+    .block-content {
+      padding: 38rpx 22rpx;
+      .process {
+        font-size: 20rpx;
+        margin: 0 auto;
+        border: 1px solid #999999;
+        padding: 10rpx;
+        border-radius: 200px;
+        text-align: center;
+        margin-bottom: 25rpx;
+        color: #808080;
+      }
+      .doc {
+        color: #808080;
+        font-size: 26rpx;
+        line-height: 30rpx;
+      }
+    }
+    .table {
+      margin: 0 auto;
+      margin-top: -24rpx;
+      .th {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 24rpx;
+      }
+      .tr {
+        font-size: 26rpx;
+        color: #808080;
+        text-align: left;
+        flex: 1;
+      }
+    }
+  }
+
+  .big-images {
+    height: 100%;
+    display: block;
+    margin-bottom: 90rpx;
+
+    image {
+      width: 100%;
+    }
+  }
+
+  .more-comment-btn {
+    font-size: 28rpx;
+    height: 55rpx;
+    line-height: 55rpx;
+    text-align: center;
+    margin: 50rpx auto 0 auto;
+    width: 200rpx;
+    -moz-border-radius: 10rpx;
+    /* Firefox */
+    -webkit-border-radius: 10rpx;
+    /* Safari 和 Chrome */
+    border-radius: 10rpx;
+    /* Opera 10.5+, 以及使用了IE-CSS3的IE浏览器 */
+    color: #ff4856;
+    border: 1px solid #ff4856;
+  }
+
+  .detail-bottom {
+    width: 100%;
+    border-top: 1px solid #ededed;
+    position: fixed;
+    bottom: 0;
+    background: #fff;
+    z-index: 1001;
+    .bottom-box {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      .contact {
+        width: 100rpx;
+        height: 80rpx;
+        margin: 0 auto;
+        position: absolute;
+        text-align: center;
+        line-height: 80rpx;
+        left: 100rpx; // 在客服上面
+        opacity: 0;
+      }
+    }
+    .sy-bottom {
+      padding: 15rpx 40rpx;
+      height: 60rpx;
+      line-height: 60rpx;
+      font-size: 30rpx;
+    }
+    .btn-order {
+      background: #ff4856;
+      color: #fff;
+    }
+    .btn-cart {
+      color: #fff;
+      background: #ff6e30;
+    }
+    .order-color {
+      background: #A9A9A9;
+      color: #fff;
+    }
+    .cart-color {
+      color: #fff;
+      background: #A9A9A9;
+    }
+    .item:first-child {
+      border-right: 1px solid #efefef;
+    }
+    .item {
+      flex: 1;
+      text-align: center;
+      .doc {
+        font-size: 24rpx;
+      }
+    }
+    .favoritec_active {
+      .doc {
+        color: #ff4856;
+      }
+      .iconfont {
+        color: #ff4856;
+      }
+    }
+  }
+
+  .over-model {
+    position: fixed;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    top: 0;
+  }
+
+  .panel-model {
+    position: fixed;
+    height: 0rpx;
+    width: 100%;
+    z-index: 1002;
+    background: #fff;
+    bottom: 0;
+  }
+
+  .model-content {
+    padding: 20rpx;
+    position: relative;
+  }
+
+  .header-box {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 26rpx;
+
+    .img-wrap {
+      height: 200rpx;
+      width: 200rpx;
+      background: #000;
+    }
+
+    .goods-img {
+      height: 200rpx;
+      width: 200rpx;
+      background: #000;
+    }
+
+    .product-wrap {
+      padding: 20rpx;
+    }
+
+    .product-name {
+      color: #666;
+    }
+
+    .price {
+      color: #e11500;
+      font-size: 36rpx;
+      padding-top: 32rpx;
+    }
+  }
+
+  .rule-box {
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 26rpx;
+
+    .title {
+      color: #4c4c4c;
+      font-size: 32rpx;
+      margin-top: 10rpx;
+    }
+
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 5rpx;
+      margin-left: -20rpx;
+    }
+
+    .item {
+      padding: 15rpx 28rpx;
+      background: #e6e6e6;
+      color: #000;
+      margin-left: 20rpx;
+      margin-top: 10rpx;
+      border-radius: 10rpx;
+    }
+
+    .active {
+      background: #ed394a;
+      color: #fff;
+    }
+  }
+
+  .num-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15rpx 0rpx;
+
+    .title {
+      color: #4c4c4c;
+      font-size: 32rpx;
+    }
+  }
+
+  .buy-num {
+    width: 170rpx;
+    height: 48rpx;
+    line-height: 48rpx;
+    display: flex;
+    font-size: 24rpx;
+    text-align: center;
+
+    .minus-btn {
+      width: 48rpx;
+      height: 100%;
+      border-left: 1rpx solid #ccc;
+      border-bottom: 1rpx solid #ccc;
+      border-top: 1rpx solid #ccc;
+      border-bottom-left-radius: 6rpx;
+      border-top-left-radius: 6rpx;
+    }
+
+    .minus-btn.disabled {
+      background-color: #f5f5f9;
+      border-left: 1rpx solid #eee;
+      border-bottom: 1rpx solid #eee;
+      border-top: 1rpx solid #eee;
+      color: #ccc;
+    }
+
+    .plus-btn {
+      width: 48rpx;
+      height: 100%;
+      border-right: 1rpx solid #ccc;
+      border-bottom: 1rpx solid #ccc;
+      border-top: 1rpx solid #ccc;
+      border-bottom-right-radius: 6rpx;
+      border-top-right-radius: 6rpx;
+    }
+
+    .plus-btn.disabled {
+      background-color: #f5f5f9;
+      border-right: 1rpx solid #eee;
+      border-bottom: 1rpx solid #eee;
+      border-top: 1rpx solid #eee;
+      color: #ccc;
+    }
+
+    input {
+      width: 68rpx;
+      height: 48rpx;
+      min-height: 48rpx;
+      text-align: center;
+      font-size: 24rpx;
+      border: 1rpx solid #ccc;
+    }
+  }
+
+  .colse-model {
+    position: absolute;
+    right: 10rpx;
+    top: 10rpx;
+
+    .icon-close {
+      color: #e11500;
+      font-size: 32rpx;
+    }
+  }
+
+  .comfire-btn {
+    height: 100rpx;
+    line-height: 100rpx;
+    width: 100%;
+    background: #ff6e30;
+    text-align: center;
+    color: #fff;
+    position: absolute;
+    bottom: 0;
+    z-index: 10003;
+  }
+</style>
