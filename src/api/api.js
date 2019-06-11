@@ -16,9 +16,16 @@ const getHomeDisvocerList = (params) => wxRequest(params, apiMall + '/api/mall/d
 //查询广告列表
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
 
+//一级分类
+const getRootCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/rootCtegoryList');
+//二级三级分类
+const getChildCategoryList = (params) => wxRequest(params, apiMall + '/api/mall/childGoodsCatetoryList');
+
 export default {
   wxJsCode2Session,
   getUserInfo,
   getHomeDisvocerList,
   getAdList,
+  getRootCategoryList,
+  getChildCategoryList,
 }
