@@ -73,7 +73,7 @@
       })
     }
 
-    async searchGoods(keyword, currentPage, size) {
+    async searchGoods(currentPage, size) {
       let that = this
       const json = await api.getGoodsList({
         query: {
@@ -98,9 +98,9 @@
       that.showLoading = false
       that.$apply()
 
-      if (keyword.length > 0) {
+      if (this.keyword.length > 0) {
         this.keywordList.push({
-          'keyword': keyword,
+          'keyword': this.keyword,
           'id': this.keywordList.length + 1
         })
         wepy.setStorageSync(SEARCH_KEYWORDS, this.keywordList)
@@ -159,7 +159,7 @@
         this.isEmpty = false
         this.showLoading = true
         this.keyword = val
-        this.searchGoods(val)
+        this.searchGoods()
       },
 
       sortBy(e) {
@@ -182,7 +182,7 @@
         this.showLoading = true
         this.showHistory = false
         this.isEmpty = false
-        this.searchGoods(this.keyword)
+        this.searchGoods()
       },
 
       selectHistoryKeyword(e) {
@@ -199,7 +199,7 @@
 
         if (keyword.length > 0) {
           this.keyword = keyword
-          this.searchGoods(keyword)
+          this.searchGoods()
         }
       },
 
@@ -213,12 +213,13 @@
       this.openId = userSpecialInfo.openid
       this.list = []
       this.skuval = ''
+      this.keyword = ''
       this.cateCode = option.cateCode
       this.keywordList = []
       if (this.cateCode !== undefined && this.cateCode.length > 0) { // 分类进入
         this.$invoke('search', 'show', '0')
         this.showHistory = false
-        this.searchGoods(this.cateCode)
+        this.searchGoods()
         this.title = '' + option.title
         this.setTitle(this.title)
       } else { // 搜索进入
