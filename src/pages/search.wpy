@@ -1,0 +1,294 @@
+<template>
+  <view class="container">
+    <search @searchValue.user="search"></search>
+
+    <filterBar wx:if="{{ goods.length > 0 || skuval !=='' }}"  @sortBy.user="sortBy"></filterBar>
+
+    <view wx:if="{{ goods.length > 0 }}">
+      <shopGridList :purchasetype.sync="purchasetype" :list.sync="goods"></shopGridList>
+      <bottomLoadMore :show.sync="showLoading" message="正在加载"></bottomLoadMore>
+      <placeholder :show.sync="isEmpty" message="暂无发现数据"></placeholder>
+    </view>
+
+    <view class="history {{ showHistory ? '' : 'hidden' }}" wx:else>
+      <view class="doc">历史记录</view>
+      <view class="label">
+        <view wx:for="{{ keywordList }}" wx:key="item" @tap.stop="selectHistoryKeyword" data-id="{{ item.id }}">
+          <view class="child {{ item.selected ? 'active' : ''}}">{{ item.keyword }}</view>
+        </view>
+      </view>
+      <view class="btn-box">
+        <view class="button" @tap.stop="clearHistory">清除历史记录</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '@/api/api'
+  import tip from '@/utils/tip'
+  import { USER_SPECICAL_INFO, SEARCH_KEYWORDS } from '@/utils/constant'
+  import SearchBar from '@/components/search'
+  import FilterBar from '@/components/filter_bar'
+  import ShopGridList from '@/components/shop_grid_list'
+  import BottomLoadMore from '@/components/common/bottom_load_more'
+  import Placeholder from '@/components/common/placeholder'
+  import FilterSlider from '@/components/filter_slider'
+
+  export default class Search extends wepy.page {
+    config = {
+      navigationBarTitleText: '搜索'
+    }
+
+    components = {
+      search: SearchBar,
+      filterBar: FilterBar,
+      filterSlider: FilterSlider,
+      shopGridList: ShopGridList,
+      bottomLoadMore: BottomLoadMore,
+      placeholder: Placeholder
+    }
+
+    data = {
+      openId: '',
+      goods: [],
+      showLoading: false,
+      purchasetype: 1,
+      isEmpty: false,
+      currentPage: 1,
+      pageTotal: 0,
+      keyword: '',
+      keywordList: [],
+      cateCode: '',
+      showHistory: true,
+      sort: -1,
+      title: '',
+      skuval: ''
+    }
+
+    setTitle(title) {
+      wepy.setNavigationBarTitle({
+        title: title
+      })
+    }
+
+    async searchGoods(currentPage, size) {
+      let that = this
+      const json = await api.getGoodsList({
+        query: {
+          page: currentPage || 1,
+          size: size || 10,
+          searchKeyWords: this.keyword,
+          cateCode: this.cateCode || '',
+          sort: this.sort,
+          skuval: this.skuval
+        }
+      })
+
+      if (json.data.code === '0') {
+        that.goods = [...that.goods, ...json.data.list]
+        that.pageTotal = json.data.pageTotal
+        if (json.data.pageTotal === 0) {
+          that.isEmpty = true
+        }
+      } else {
+        tip.error(json.data.msg)
+      }
+      that.showLoading = false
+      that.$apply()
+
+      if (this.keyword.length > 0) {
+        this.keywordList.push({
+          'keyword': this.keyword,
+          'id': this.keywordList.length + 1
+        })
+        wepy.setStorageSync(SEARCH_KEYWORDS, this.keywordList)
+
+        // await api.addSearchKeyword({
+        //   query: {
+        //     openId: that.openId,
+        //     keyword: keyword
+        //   }
+        // })
+      }
+    }
+
+    async getKeywords() {
+      // 用本地缓存代替 API 调用
+      let keywords = wepy.getStorageSync(SEARCH_KEYWORDS)
+      if (Array.isArray(keywords)) {
+        this.keywordList = keywords
+      } else {
+        this.keywordList = []
+      }
+
+      // const json = await api.getSearchKeywordList({
+      //   query: {
+      //     openId: this.openId
+      //   }
+      // })
+      // if (json.data.code === '0') {
+      //   this.keywordList = json.data.list
+      // }
+
+      // this.$apply()
+    }
+
+    async clearKeywords() {
+      // 用本地缓存代替 API 调用
+      this.keywordList = []
+      wepy.setStorageSync(SEARCH_KEYWORDS, this.keywordList)
+
+      // const json = await api.clearSearchKeyword({
+      //   query: {
+      //     openId: this.openId
+      //   }
+      // })
+      // if (json.data.code === '0') {
+      //   this.keywordList = []
+      // } else {
+      //   tip.error(json.data.msg)
+      // }
+      // this.$apply()
+    }
+
+    methods = {
+      search(val) {
+        this.list = []
+        this.isEmpty = false
+        this.showLoading = true
+        this.keyword = val
+        this.searchGoods()
+      },
+
+      sortBy(e) {
+        switch (e.name) {
+          case 'general':
+            this.sort = -1
+            break
+          case 'sale':
+            this.sort = 3
+            break
+          case 'price':
+            this.sort = (e.type === 'desc') ? 2 : 1
+            break
+          case 'sku':
+            this.skuval = e.type
+            break
+        }
+
+        this.goods = []
+        this.showLoading = true
+        this.showHistory = false
+        this.isEmpty = false
+        this.searchGoods()
+      },
+
+      selectHistoryKeyword(e) {
+        var id = e.currentTarget.dataset.id
+        var keyword = ''
+        for (var i = 0; i < this.keywordList.length; i++) {
+          if (id === this.keywordList[i].id) {
+            keyword = this.keywordList[i].keyword
+            this.keywordList[i].selected = true
+          } else {
+            this.keywordList[i].selected = false
+          }
+        }
+
+        if (keyword.length > 0) {
+          this.keyword = keyword
+          this.searchGoods()
+        }
+      },
+
+      clearHistory() {
+        this.clearKeywords()
+      }
+    }
+
+    onLoad(option) {
+      let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {}
+      this.openId = userSpecialInfo.openid
+      this.list = []
+      this.skuval = ''
+      this.keyword = ''
+      this.cateCode = option.cateCode
+      this.keywordList = []
+      if (this.cateCode !== undefined && this.cateCode.length > 0) { // 分类进入
+        this.$invoke('search', 'show', '0')
+        this.showHistory = false
+        this.searchGoods()
+        this.title = '' + option.title
+        this.setTitle(this.title)
+      } else { // 搜索进入
+        this.$invoke('search', 'show', '1')
+        this.showHistory = true
+        this.getKeywords()
+      }
+    }
+
+    onReachBottom() {
+      let that = this
+      that.showLoading = true
+      // 判断总页数是否大于翻页数
+      if (that.pageTotal > that.currentPage) {
+        // 防止重复加载
+        if (that.preventRepeatReuqest) {
+          return true
+        }
+        that.preventRepeatReuqest = true
+        that.currentPage++
+        that.searchGoods('', that.currentPage)
+        that.preventRepeatReuqest = false
+      } else {
+        that.showLoading = false
+      }
+    }
+  }
+</script>
+
+<style lang="less">
+  .history {
+    padding: 20px 27px;
+  }
+
+  .doc {
+    color: #999;
+    font-size: 26rpx;
+  }
+
+  .label {
+    margin-top: 20rpx;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-left: -20rpx;
+
+    .child {
+      background: #dedede;
+      padding: 10rpx 20rpx;
+      border-radius: 300rpx;
+      margin-left: 20rpx;
+      font-size: 26rpx;
+      margin-top: 5rpx;
+      color: #000;
+    }
+  }
+
+  .btn-box {
+    width: 377rpx;
+    margin: 0 auto;
+    padding-top: 88rpx;
+
+    .button {
+      color: #999;
+    }
+  }
+
+  .active {
+    border: 1px solid #f23737;
+    color: #f23737;
+  }
+</style>
