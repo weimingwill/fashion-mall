@@ -1,0 +1,47 @@
+<template>
+  <view class="empty-placeholder row-center" wx:if="{{show}}">
+    <image class="icon-xl" src="../../images/empty.png" />
+    <view class="txt">{{message}}</view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class Placeholder extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: false
+      },
+      message: {
+        default: '没有相关信息'
+      }
+    }
+  }
+</script>
+<style lang="less">
+  .empty-placeholder {
+    margin-top:150rpx;
+    width: 100%;
+    text-align: center;
+
+    text {
+        color: #666;
+        font-size: 40rpx;
+        margin-left: 30rpx;
+    }
+  }
+
+  .icon-xl {
+    width: 90rpx;
+    height: 100rpx;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .txt {
+    font-size: 26rpx;
+    color: #888888;
+    margin-top: 30rpx;
+  }
+</style>

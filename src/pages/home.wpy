@@ -1,14 +1,52 @@
 <template>
   <view class="container">
-    <view class="userinfo" @tap="handleViewTap">
-      <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
-      <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
+    <view class="pos">
+      <view class="search_read_only">
+        <navigator class="search_content" open-type="navigate" url="/pages/search">
+          <i class="iconfont icon-search"></i>
+          <view class="search_input">搜索商品</view>
+        </navigator>
+        <navigator class="message" url="/pages/messages">
+          <i class="iconfont icon-message"></i>
+        </navigator>
+      </view>
     </view>
+
+    <swiper class="swiper"
+      indicator-active-color="{{ indicatorActiveColor }}"
+      indicator-dots="{{ indicatorDots }}"
+      autoplay="{{ autoplay }}"
+      interval="{{ interval }}"
+      duration="{{ duration }}"
+      circular="{{ circular }}">
+      <block wx:for="{{ adList }}" wx:key="id">
+        <swiper-item>
+          <image src="{{item.picUrl}}" class="slide-image" @tap="goToAdvert({{ item.advertUrl }})" />
+        </swiper-item>
+      </block>
+    </swiper>
+
+    <view class="nav_list">
+      <block wx:for="{{ navList }}" wx:key="id">
+        <navigator open-type="navigate" url="{{ item.pagePath }}">
+          <image src="{{ item.imagePath }}" class="nav_icon" />
+          <view class="nav_text">{{ item.text }}</view>
+        </navigator>
+      </block>
+    </view>
+
+    <discover :list.sync="discoverList"></discover>
+
+    <placeholder :show.sync="showPlaceholder" message="暂无发现数据"></placeholder>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import api from '@/api/api'
+  import tip from '@/utils/tip'
+  import Placeholder from '../components/common/placeholder'
+  import Discover from '../components/discover'
 
   export default class Home extends wepy.page {
     config = {
@@ -16,12 +54,51 @@
     }
 
     components = {
+      placeholder: Placeholder,
+      discover: Discover
     }
 
     data = {
-      userInfo: {
-        nickName: '加载中...'
-      }
+      indicatorActiveColor: '#fff',
+      indicatorDots: true,
+      autoplay: true,
+      interval: 3000,
+      duration: 1000,
+      circular: true,
+
+      showPlaceholder: false,
+
+      // 导航列表
+      navList: [
+        {
+          'pagePath': '/pages/sign_in',
+          'imagePath': '../images/nav/icon_nav_01_new.png',
+          'text': '签到有礼'
+        },
+        {
+          'pagePath': '/pages/exchange_goods',
+          'imagePath': '../images/nav/icon_nav_02_new.png',
+          'text': '换货专区'
+        },
+        {
+          'pagePath': '/pages/wholesale',
+          'imagePath': '../images/nav/icon_nav_03_new.png',
+          'text': '特价专区'
+        },
+        {
+          'pagePath': '/pages/replenishment_goods',
+          'imagePath': '../images/nav/icon_nav_04_new.png',
+          'text': '我要补货'
+        }
+      ],
+
+      // 广告列表
+      adList: [],
+
+      // 发现列表
+      currentPage: 1,
+      pageTotal: 0,
+      discoverList: []
     }
 
     computed = {
@@ -31,36 +108,109 @@
     }
 
     methods = {
+      goToAdvert(url) {
+        if (url.length === 0) {
+          return
+        }
+        wepy.navigateTo({
+          url: url
+        })
+      }
     }
 
     events = {
     }
 
-    onLoad() {
-      let self = this
-      this.$parent.getUserInfo(function (userInfo) {
-        if (userInfo) {
-          self.userInfo = userInfo
-        }
-        self.$apply()
+    async getAdList() {
+      const json = await api.getAdList({
+        query: {}
       })
+
+      if (json.data.code === '0') {
+        this.adList = json.data.list
+        this.$apply()
+      }
+    }
+
+    async getDiscoverList(currentPage, size) {
+      let that = this
+      const json = await api.getHomeDisvocerList({
+        query: {
+          page: currentPage || 1,
+          size: size || 10
+        }
+      })
+
+      if (json.data.code === '0') {
+        this.discoverList = [...this.discoverList, ...json.data.list]
+
+        // 后台的数据不再返回 pageTotal，下面这段没有实质性作用。
+        if (json.data.pageTotal) {
+          that.pageTotal = json.data.pageTotal
+        }
+        if (json.data.pageTotal === 0) {
+          that.showPlaceholder = true
+        }
+        that.$apply()
+      } else {
+        tip.error(json.data.msg)
+      }
+      that.showLoading = false
+    }
+
+    onLoad() {
+      this.getAdList()
+      this.discoverList = []
+      this.getDiscoverList()
     }
   }
 </script>
 <style lang="less">
-  .userinfo {
+  .swiper {
+    height: 348rpx;
+  }
+
+  .slide-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .pos {
+    margin-bottom: 20rpx;
+    padding-top: 20rpx;
+
+    .message {
+      display: block;
+      text-align: center;
+      margin-left: 20rpx;
+    }
+
+    .doc {
+      font-size: 16rpx;
+      display: block;
+    }
+  }
+
+  .nav_list {
+    color: #404040;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+    font-size: 24rpx;
+    justify-content: space-between;
+    padding: 20rpx 60rpx 10rpx 60rpx;
 
-  .userinfo-avatar {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-  }
+    navigator {
+      text-align: center
+    }
 
-  .userinfo-nickname {
-    color: #aaa;
+    .nav_icon {
+      height: 70rpx;
+      width: 70rpx;
+      margin: 0 auto;
+      margin-bottom: 14rpx;
+    }
+
+    .nav_text {
+      font-size: 24rpx
+    }
   }
 </style>
