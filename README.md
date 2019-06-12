@@ -1,6 +1,8 @@
 # Fashion Mall
 
-这是用 Wepy 开发的一个服装购物商场小程序。主要是参考了 [wepy-mall](https://github.com/dyq086/wepy-mall)，但在它的基础上做了一些代码的优化，包括代码风格，命名等。在学习开发的过程中，将各个模块分成9个不同的 branch，目的是让初学者更容易上手。相当于一步一步从头开始带这你写小程序。同时，配套了一个本地可以运行的 mock server [fashion-mall-server](https://github.com/weimingwill/fashion-mall-server)，可以更容易的看数据，进行API的测试和再开发。
+这是用 Wepy 开发的一个服装购物商场小程序。主要是参考了 [wepy-mall](https://github.com/dyq086/wepy-mall)，但在它的基础上做了一些代码的优化，包括代码风格，命名等。
+
+在学习开发的过程中，将各个模块分成9个不同的 branch，目的是让初学者更容易上手。相当于一步一步从头开始带这你写小程序。同时，配套了一个本地可以运行的 mock server [fashion-mall-server](https://github.com/weimingwill/fashion-mall-server)，可以更容易的看数据，进行API的测试和再开发。
 
 ## 使用指南
 
@@ -29,14 +31,18 @@ wepy build --watch
 在 微信开发者工具 任务栏 里的 `详情` -> `本地设置` 里，进行下面这些配置：
 
 > es6: 对应关闭ES6转ES5选项，关闭。 重要：未关闭会运行报错。
+>
 > postcss: 对应关闭上传代码时样式自动补全选项，关闭。 重要：某些情况下漏掉此项也会运行报错。
+>
 > minified: 对应关闭代码压缩上传选项，关闭。重要：开启后，会导致真机computed, props.sync 等等属性失效。（注：压缩功能可使用WePY提供的build指令代替，详见后文相关介绍以及Demo项目根目录中的wepy.config.js和package.json文件。）
+>
 > urlCheck: 对应不检查安全域名选项，开启。 如果已配置好安全域名则建议关闭。
 
 具体设置的地方可能会随着开发者工具更新而改变，如果变了可以直接搜索一下。
 
 ### 目录结构
 
+```
 src
 ├── api
 │   └── api.js // 接口定义
@@ -66,6 +72,7 @@ src
 │   └── wxParse // 小程序富文本
 ├── styles // 样式
 └── utils // 帮助文件夹
+```
 
 ### 开发前最好有一些基础知识
 
