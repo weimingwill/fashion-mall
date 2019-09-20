@@ -82,6 +82,22 @@ src
 
 3. [Wepy 官方文档](https://tencent.github.io/wepy/document.html#/)
 
+
+### 部分功能截图 (From Wepy Mall)
+
+<img src="screenshots/1.jpeg" width="365" height="619" />
+
+<img src="screenshots/2.jpeg" width="365" height="619"/>
+
+<img src="screenshots/3.jpeg" width="365" height="619"/>
+
+<img src="screenshots/4.jpeg" width="365" height="619"/>
+
+<img src="screenshots/5.jpeg" width="365" height="619"/>
+
+<img src="screenshots/6.jpeg" width="365" height="619"/>
+
+
 ### Branches
 
 * master：用 `wepy new standard <project>` 初始化后得到的模版，修复了很多个 npm package 的问题。
