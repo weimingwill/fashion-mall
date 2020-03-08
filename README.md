@@ -85,17 +85,15 @@ src
 
 ### 部分功能截图 (From Wepy Mall)
 
-<img src="screenshots/1.jpeg" width="365" height="619" />
+<img src="screenshots/1.jpeg" width="365" height="619" /> <img src="screenshots/2.jpeg" width="365" height="619"/>
 
-<img src="screenshots/2.jpeg" width="365" height="619"/>
+<br>
 
-<img src="screenshots/3.jpeg" width="365" height="619"/>
+<img src="screenshots/3.jpeg" width="365" height="619"/> <img src="screenshots/4.jpeg" width="365" height="619"/>
 
-<img src="screenshots/4.jpeg" width="365" height="619"/>
+<br>
 
-<img src="screenshots/5.jpeg" width="365" height="619"/>
-
-<img src="screenshots/6.jpeg" width="365" height="619"/>
+<img src="screenshots/5.jpeg" width="365" height="619"/> <img src="screenshots/6.jpeg" width="365" height="619"/>
 
 
 ### Branches
