@@ -33,7 +33,7 @@
     "eslint-plugin-html": "^2.0.3",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^2.3.1",
-    "less": "^3.9.0",
+    "less": "^3.13.1",
     "wepy-async-function": "^1.4.7",
     "wepy-com-toast": "^1.0.2",
     "wepy-compiler-babel": "^1.5.3",
